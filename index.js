@@ -27,3 +27,23 @@ function verifyJWT(req, res, next) {
       next();
     });
   }
+
+
+  async function run(){
+      try{
+
+      }
+       finally{
+
+       }
+  }
+  run().catch(console.dir);
+
+
+app.get('/', (req, res) => {
+  res.send('Hello From Drone Kits ..!')
+})
+
+app.listen(port, () => {
+  console.log(`Drone Kits listening on port ${port}`)
+})
