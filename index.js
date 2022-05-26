@@ -134,14 +134,8 @@ function verifyJWT(req, res, next) {
     });
     // <<<<<------Get Review Here------>>>>>>
 
-    app.get('/reviews' ,  async(req , res) =>{
-      const quary ={}
-      const cursor = reviewCollection.find(quary);
-      const result = await cursor.toArray();
-      res.send(result)
-  
-    })
-  // Update user
+
+  // Update user..........
 
     app.put('/users/:email', async (req, res) => {
       const email = req.params.email;
