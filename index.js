@@ -30,17 +30,7 @@ function verifyJWT(req, res, next) {
   }
 
 
-  // use Admin Function
-  const verifyAdmin = async (req, res, next) => {
-    const requester = req.decoded.email;
-    const requesterAccount = await userCollection.findOne({ email: requester });
-    if (requesterAccount.role === 'admin') {
-      next();
-    }
-    else {
-      res.status(403).send({ message: 'forbidden' });
-    }
-  }
+  
 
 
   async function run(){
@@ -66,6 +56,18 @@ function verifyJWT(req, res, next) {
             const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' })
             res.send({ result, token });
           });
+          // use Admin Function
+  const verifyAdmin = async (req, res, next) => {
+    const requester = req.decoded.email;
+    const requesterAccount = await userCollection.findOne({ email: requester });
+    console.log(requesterAccount);
+    if (requesterAccount.role === 'admin') {
+      next();
+    }
+    else {
+      res.status(403).send({ message: 'forbidden' });
+    }
+  }
       
         // Get Parts here 
         app.get('/parts' ,  async(req , res) =>{
@@ -137,22 +139,30 @@ function verifyJWT(req, res, next) {
       res.send(result)
     })
 
-    // update a new stock available
-    app.put('/parts/:id' , async (req ,res) =>{
-      const id = req.params.id;
-      const quantity = req.body;
-      const query = {_id: ObjectId(id)};
-      const options = { upsert: true };
-      const updateDoc = {
-        $set: {
-          stock:quantity.newStock
-        },
-      };
-        const result = await partsCollection.updateOne
-        (query,updateDoc,options);
-        res.send(result) ;
-        
+    // all order here
+     // Get Parts here 
+     app.get('/allorders' ,  async(req , res) =>{
+      const quary ={}
+      const cursor = purchaseCollection.find(quary);
+      const result = await cursor.toArray();
+      res.send(result)
     })
+    // update a new stock available
+    // app.put('/parts/:id' , async (req ,res) =>{
+    //   const id = req.params.id;
+    //   const quantity = req.body;
+    //   const query = {_id: ObjectId(id)};
+    //   const options = { upsert: true };
+    //   const updateDoc = {
+    //     $set: {
+    //       stock:quantity.newStock
+    //     },
+    //   };
+    //     const result = await partsCollection.updateOne
+    //     (query,updateDoc,options);
+    //     res.send(result) ;
+        
+    // })
 
     // <<<<<------Add Review Here-------->>>>>>>
     app.post('/review', verifyJWT, async (req, res) => {
@@ -235,7 +245,7 @@ function verifyJWT(req, res, next) {
       res.send({ admin: isAdmin })
     })
     // -----user admin email find-------
-    app.put('/user/admin/:email', verifyJWT, async (req, res) => {
+    app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
       console.log(email);
       const filter = { email: email };
