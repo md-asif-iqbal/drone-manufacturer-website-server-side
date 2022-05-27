@@ -70,11 +70,17 @@ function verifyJWT(req, res, next) {
   }
       
         // Get Parts here 
-        app.get('/parts' ,  async(req , res) =>{
+        app.get('/parts' , async(req , res) =>{
           const quary ={}
           const cursor = partsCollection.find(quary);
           const result = await cursor.toArray();
           res.send(result)
+        })
+        app.post('/parts' , verifyJWT,  async(req , res) =>{
+          const products = req.body;
+
+          const result = await partsCollection.insertOne(products);
+          return res.send({ success: true, result });
         })
         // // --------find One product id--------...
     app.get('/parts/:id' , async(req , res )=>{
@@ -84,15 +90,23 @@ function verifyJWT(req, res, next) {
       const products = await partsCollection.findOne(query);
       res.send(products);
     })
+    // Parts Deleted
+    app.delete('/parts/:id' ,verifyJWT, async(req , res )=>{
+      const id = req.params.id;
+      console.log(id);
+      const query = {_id: ObjectId(id)};
+      const products = await partsCollection.deleteOne(query);
+      res.send(products);
+    })
 
     // Add single Purchase here
     app.post('/purchase', async (req, res) => {
       const purchase = req.body;
-      const query = { purchaseName: purchase.purchaseName, purchaseId: purchase.purchaseId, email: purchase.email }
-      const exists = await purchaseCollection.findOne(query);
-      if (exists) {
-        return res.send({ success: false, purchase: exists })
-      }
+      // const query = { purchaseName: purchase.purchaseName, purchaseId: purchase.purchaseId, email: purchase.email }
+      // const exists = await purchaseCollection.findOne(query);
+      // if (exists) {
+      //   return res.send({ success: false, purchase: exists })
+      // }
       const result = await purchaseCollection.insertOne(purchase);
       return res.send({ success: true, result });
     });
@@ -141,12 +155,25 @@ function verifyJWT(req, res, next) {
 
     // all order here
      // Get Parts here 
-     app.get('/allorders' ,  async(req , res) =>{
+     app.get('/allorders' , verifyJWT, async(req , res) =>{
       const quary ={}
       const cursor = purchaseCollection.find(quary);
       const result = await cursor.toArray();
       res.send(result)
     })
+    // purchase Status Update
+    app.put('/allorders/:id', verifyJWT, async (req, res) => {
+      const id  = req.params.id;
+
+      const filter = {_id: ObjectId(id)};
+      const updateDoc = {
+        $set: { status: 'shipped' },
+      };
+      const result = await purchaseCollection.updateOne(filter, updateDoc);
+      console.log(result);
+      res.send(result);
+    })
+
     // update a new stock available
     // app.put('/parts/:id' , async (req ,res) =>{
     //   const id = req.params.id;
@@ -255,6 +282,7 @@ function verifyJWT(req, res, next) {
       const result = await userCollection.updateOne(filter, updateDoc);
       res.send(result);
     })
+    
 
 
       }
