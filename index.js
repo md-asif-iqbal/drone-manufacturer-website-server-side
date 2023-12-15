@@ -4,6 +4,7 @@ const cors = require('cors');
 const jwt = require('jsonwebtoken');
 
 const crypto = require('crypto'); // Include the crypto module
+const CryptoJS = require("crypto-js");
 
 const winston = require('winston');
 const { log } = require('console');
