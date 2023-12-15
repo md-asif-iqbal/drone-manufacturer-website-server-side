@@ -2,8 +2,25 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const express = require('express');
 const cors = require('cors');
 const jwt = require('jsonwebtoken');
+
+const crypto = require('crypto'); // Include the crypto module
+
+const winston = require('winston');
+const { log } = require('console');
+
 require('dotenv').config();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+
+const logger = winston.createLogger({
+  level: 'info',
+  format: winston.format.json(),
+  transports: [
+    new winston.transports.Console(),
+    new winston.transports.File({ filename: 'combined.log' }),
+  ],
+});
+
 
 const app = express();
 const port = process.env.PORT || 8000;
@@ -30,7 +47,22 @@ function verifyJWT(req, res, next) {
   }
 
 
-  
+// encryption and decryption
+const encodeFn = (data) => {
+  const cipherText = CryptoJS.AES.encrypt(
+    JSON.stringify(data),
+    process.env.SECRET_KEY
+  ).toString();
+  return cipherText;
+};
+
+const decodedFn = (data) => {
+  const bytes = CryptoJS.AES.decrypt(data, process.env.SECRET_KEY);
+  const decryptedData = JSON.parse(bytes.toString(CryptoJS.enc.Utf8));
+  return decryptedData;
+};
+
+
 
 
   async function run(){
@@ -44,18 +76,31 @@ function verifyJWT(req, res, next) {
 
 
         // User Access Token
-        app.put('/user/:email', async (req, res) => {
-            const email = req.params.email;
-            const user = req.body;
-            const filter = { email: email };
-            const options = { upsert: true };
-            const updateDoc = {
-              $set: user,
-            };
-            const result = await userCollection.updateOne(filter, updateDoc, options);
-            const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '10h' })
-            res.send({ result, token });
-          });
+        // Use the encryption function before storing the user's password
+    app.put('/user/:email', async (req, res) => {
+      const email = req.params.email;
+      const user = req.body;
+      user.password = encodeFn(data.password);
+      user.role = encodeFn(data.role);
+    
+      const filter = { email: email };
+      const options = { upsert: true };
+      const updateDoc = {
+        $set: user,
+      };
+      try {
+        
+        const result = await userCollection.updateOne(filter, updateDoc, options);
+        const token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
+        logger.info(`User updated: ${email}`);
+
+        res.send({ result, token });
+      } catch (error) {
+        logger.error(`Error updating user: ${email}`, error);
+        res.status(500).send({ message: 'Internal Server Error' });
+      }
+    });
+
           // use Admin Function
   const verifyAdmin = async (req, res, next) => {
     const requester = req.decoded.email;
@@ -248,6 +293,8 @@ function verifyJWT(req, res, next) {
      // _______>>>>>>> Users alll--------<<<<<>>>>>
     app.get('/user', verifyJWT, verifyAdmin, async (req, res) => {
       const users = await userCollection.find().toArray();
+      users.password = decodedFn(users.password);
+      users.role = decodedFn(users.role);
       res.send(users);
     });
     // <<<<<<Payments here >>>>>>>>
