@@ -281,6 +281,7 @@ const decodedFn = (data) => {
       if(email === decodedEmail){
         const quary = {email : email};
         const purchased = await userCollection.find(quary).toArray();
+
         res.send(purchased);
       }
      
@@ -315,9 +316,12 @@ const decodedFn = (data) => {
     app.get('/admin/:email', async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email: email });
+      user.password = decodedFn(user.password);
+      user.role = decodedFn(user.role);
       const isAdmin = user.role === 'admin';
       res.send({ admin: isAdmin })
     })
+    // donee ....
     // -----user admin email find-------
     app.put('/user/admin/:email', verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
