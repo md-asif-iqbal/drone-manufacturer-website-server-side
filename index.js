@@ -81,8 +81,8 @@ const decodedFn = (data) => {
     app.put('/user/:email', async (req, res) => {
       const email = req.params.email;
       const user = req.body;
-      user.password = encodeFn(data.password);
-      user.role = encodeFn(data.role);
+      // user.password = encodeFn(data.password);
+      // user.role = encodeFn(data.role);
     
       const filter = { email: email };
       const options = { upsert: true };
@@ -295,8 +295,8 @@ const decodedFn = (data) => {
      // _______>>>>>>> Users alll--------<<<<<>>>>>
     app.get('/user', verifyJWT, verifyAdmin, async (req, res) => {
       const users = await userCollection.find().toArray();
-      users.password = decodedFn(users.password);
-      users.role = decodedFn(users.role);
+      // users.password = decodedFn(users.password);
+      // users.role = decodedFn(users.role);
       res.send(users);
     });
     // <<<<<<Payments here >>>>>>>>
@@ -317,8 +317,8 @@ const decodedFn = (data) => {
     app.get('/admin/:email', async (req, res) => {
       const email = req.params.email;
       const user = await userCollection.findOne({ email: email });
-      user.password = decodedFn(user.password);
-      user.role = decodedFn(user.role);
+      // user.password = decodedFn(user.password);
+      // user.role = decodedFn(user.role);
       const isAdmin = user.role === 'admin';
       res.send({ admin: isAdmin })
     })
